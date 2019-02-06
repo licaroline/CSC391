@@ -9,7 +9,7 @@ the filtered image to a JPG file called filtered_image.JPG.
 
 """
 
-import os 
+import os
 import cv2
 import numpy as np
 
