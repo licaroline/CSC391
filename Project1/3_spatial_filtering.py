@@ -48,7 +48,6 @@ if __name__ == "__main__":
         exit()
 
     img = cv2.imread(filename, 1)
-    print(img.size)
 
     # show original image
     cv2.imshow('original image', img)
