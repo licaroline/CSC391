@@ -40,30 +40,30 @@ def box(img, k):
     return new_img
 
 if __name__ == "__main__":
-    dir = os.path.dirname(__file__)
-    filename = os.path.join(dir, 'Images/DSC_9259.JPG') # change name of file accordingly
+    DIR = os.path.dirname(__file__)
+    FILENAME = os.path.join(DIR, 'Images/DSC_9259.JPG') # change name of file accordingly
 
-    if not os.path.exists(filename):
+    if not os.path.exists(FILENAME):
         print("File does not exist.")
         exit()
 
-    img = cv2.imread(filename, 1)
+    IMG = cv2.imread(FILENAME, 1)
 
     # show original image
-    cv2.imshow('original image', img)
+    cv2.imshow('original image', IMG)
     cv2.waitKey(0)
 
     # get size of filter
     print("Enter k for the dimensions of the k-by-k filter: ")
-    k = int(input())
+    K = int(input())
     print(f"Filter is of dimension {k}x{k}")
 
     # filter image
-    filtered_img = box(img, k)
+    FILTERED_IMG = box(IMG, K)
 
     # show filtered image
-    cv2.imshow('filtered image', filtered_img)
+    cv2.imshow('filtered image', FILTERED_IMG)
     cv2.waitKey(0)
 
     # save filtered image
-    cv2.imwrite(os.path.join(dir, 'filtered_image.JPG'), filtered_img)
+    cv2.imwrite(os.path.join(dir, 'filtered_image.JPG'), FILTERED_IMG)
