@@ -1,3 +1,14 @@
+"""
+Caroline Li
+CSC 391 Project 1: Spatial and Frequency Filtering
+2/4/2019
+
+This script takes an image and applies a low-pass Butterworth filter and a high-pass
+Butterworth filter. It displays a plot of the magnitudes before and after the filters,
+which it saves. It also shows the images after filtering.
+
+"""
+
 import os
 import cv2
 import numpy as np
@@ -71,7 +82,14 @@ def showimg(f2):
     cv2.imshow('Image', img)
     cv2.waitKey(0)
 
-def highbutter(f2, img):
+def lowbutter(f2, img):
+    """
+    Applies a low-pass Butterworth filter on the image.
+
+    Args:
+        f2 (ndarray, complex128): 2D DFT of an image
+        img (ndarray, uint8): the original image
+    """
     filt = psychopy.filters.butter2d_lp(size=img.shape, cutoff=cutoff_freq, n=2)
 
     filtered_img = np.fft.fftshift(f2) * filt
@@ -81,7 +99,15 @@ def highbutter(f2, img):
     showimg(filtered_img)
     plot3d(filtered_img, img)
 
-def lowbutter(f2, img):
+def highbutter(f2, img):
+    """
+    Applies a high-pass Butterworth filter on the image. 
+
+    Args:
+        f2 (ndarray, complex128): 2D DFT of an image
+        img (ndarray, uint8): the original image
+    """
+    
     filt = psychopy.filters.butter2d_hp(size=img.shape, cutoff=cutoff_freq, n=2)
 
     filtered_img = np.fft.fftshift(f2) * filt
@@ -108,7 +134,7 @@ if __name__ == "__main__":
     plot3d(F2, IMG)
 
     print('Running a low-pass Butterworth filter on image...')
-    highbutter(F2, IMG)
+    lowbutter(F2, IMG)
 
     print('Running a high-pass Butterworth filter on image...')
-    lowbutter(F2, IMG)
+    highbutter(F2, IMG)
