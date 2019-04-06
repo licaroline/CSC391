@@ -2,12 +2,17 @@ from math import sqrt
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage as ndi
-from skimage.feature import hog
-from skimage.feature import blob_log, blob_dog, blob_doh
+from skimage.feature import hog, blob_log, blob_dog, blob_doh, local_binary_pattern
 from skimage import data,  exposure, io
-from skimage.color import rgb2gray
+from skimage.color import rgb2gray, label2rgb
 from skimage.util import img_as_float
 from skimage.filters import gabor_kernel
+from skimage.transform import rotate
+
+plt.rcParams['font.size'] = 9
+radius = 3
+n_points = 8 * radius
+METHOD = 'uniform'
 
 def compute_feats(image, kernels):
     feats = np.zeros((len(kernels), 2), dtype=np.double)
@@ -17,7 +22,7 @@ def compute_feats(image, kernels):
         feats[k, 1] = filtered.var()
     return feats
 
-def match(feats, ref_feats):
+def match_gabor(feats, ref_feats):
     min_error = np.inf
     min_i = None
     for i in range(ref_feats.shape[0]):
@@ -32,6 +37,32 @@ def power(image, kernel):
     image = (image - image.mean()) / image.std()
     return np.sqrt(ndi.convolve(image, np.real(kernel), mode='wrap')**2 +
                    ndi.convolve(image, np.imag(kernel), mode='wrap')**2)
+
+def hist(ax, lbp):
+    n_bins = int(lbp.max() + 1)
+    return ax.hist(lbp.ravel(), normed=True, bins=n_bins, range=(0, n_bins),
+                   facecolor='0.5')
+
+def kullback_leibler_divergence(p, q):
+    p = np.asarray(p)
+    q = np.asarray(q)
+    filt = np.logical_and(p != 0, q != 0)
+    return np.sum(p[filt] * np.log2(p[filt] / q[filt]))
+
+def match_lbp(refs, img):
+    best_score = 10
+    best_name = None
+    lbp = local_binary_pattern(img, n_points, radius, METHOD)
+    n_bins = int(lbp.max() + 1)
+    hist, _ = np.histogram(lbp, density=True, bins=n_bins, range=(0, n_bins))
+    for name, ref in refs.items():
+        ref_hist, _ = np.histogram(ref, density=True, bins=n_bins,
+                                   range=(0, n_bins))
+        score = kullback_leibler_divergence(hist, ref_hist)
+        if score < best_score:
+            best_score = score
+            best_name = name
+    return best_name
 
 def get_HOG(image):
     fd, hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
@@ -118,15 +149,15 @@ def get_gabor(agr, non):
 
     print('original: agriculture, rotated: 30deg, match result: ', end='')
     feats = compute_feats(ndi.rotate(agriculture, angle=190, reshape=False), kernels)
-    print(image_names[match(feats, ref_feats)])
+    print(image_names[match_gabor(feats, ref_feats)])
 
     print('original: agrictulture, rotated: 70deg, match result: ', end='')
     feats = compute_feats(ndi.rotate(agriculture, angle=70, reshape=False), kernels)
-    print(image_names[match(feats, ref_feats)])
+    print(image_names[match_gabor(feats, ref_feats)])
 
     print('original: non-agriculture, rotated: 145deg, match result: ', end='')
     feats = compute_feats(ndi.rotate(non_agriculture, angle=145, reshape=False), kernels)
-    print(image_names[match(feats, ref_feats)])
+    print(image_names[match_gabor(feats, ref_feats)])
 
     # Plot a selection of the filter bank kernels and their responses.
     results = []
@@ -170,8 +201,41 @@ def get_gabor(agr, non):
 
     plt.show()
 
+def get_lbp(agr, non):
+    refs = {
+        'agriculture': local_binary_pattern(agr, n_points, radius, METHOD),
+        'nonagriculture': local_binary_pattern(non, n_points, radius, METHOD)
+    }
+
+    # classify rotated textures
+    print('Rotated images matched against references using LBP:')
+    print('original: agriculture, rotated: 30deg, match result: ',
+        match_lbp(refs, rotate(agr, angle=30, resize=False)))
+    print('original: agriculture, rotated: 70deg, match result: ',
+        match_lbp(refs, rotate(agr, angle=70, resize=False)))
+    print('original: nonagriculture, rotated: 145deg, match result: ',
+        match_lbp(refs, rotate(non, angle=145, resize=False)))
+
+    # plot histograms of LBP of textures
+    fig, ((ax1, ax2), (ax4, ax5)) = plt.subplots(nrows=2, ncols=2,
+                                                        figsize=(9, 6))
+    plt.gray()
+
+    ax1.imshow(agr)
+    ax1.axis('off')
+    hist(ax4, refs['agriculture'])
+    ax4.set_ylabel('Percentage')
+
+    ax2.imshow(non)
+    ax2.axis('off')
+    hist(ax5, refs['nonagriculture'])
+    ax5.set_xlabel('Uniform LBP values')
+
+    plt.show()
+
+
 if __name__ == "__main__":
-    print("Possible features to extract: HOG, Blob, Gabor")
+    print("Possible features to extract: HOG, LBP, Blob, Gabor")
     print("Images are named with numbers between 0 and 199. 0-99 are of agriculture, 100-199 are not.")
     print("Enter 'q' to quit.")
     user_input = input("Enter desired feature: ")
@@ -185,6 +249,17 @@ if __name__ == "__main__":
             else:
                 image = io.imread("Images\\" + str(image_name) + ".png")
                 get_HOG(image)
+        elif user_input == "LBP":
+            agr_name = input("Enter number between 0-99 corresponding to an agriculture image: ")
+            non_name = input("Enter number between 100-199 corresponding to a non-agriculture image: ")
+
+            if int(agr_name) < 0 or int(non_name) < 100 or int(agr_name) > 99 or int(non_name) > 199:
+                print("Invalid number.")
+            else:
+                agr_image = io.imread("Images\\" + str(agr_name) + ".png", as_gray=True)
+                non_image = io.imread("Images\\" + str(non_name) + ".png", as_gray=True)
+                get_lbp(agr_image, non_image)
+
         elif user_input == "Blob":
             image_name = input("Enter number corresponding to an image: ")
 
