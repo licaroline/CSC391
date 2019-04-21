@@ -4,4 +4,5 @@
 ## Files and Directories
 - **`/Project1`** - Spatial and Frequency Filtering
 - **`/Project2`** - Local Feature Extraction, Detection, and Matching
-- **`/Project3`** - Object Recognition
+- **`/Project3`** - Object Recognition: Features
+- **`/Project4`** - Object Recognition: Classification
