@@ -2,7 +2,7 @@
 
 
 ### About the code
-This script makes use of the [PyTorch implementation of CycleGAN](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix).
+This script makes use of the [PyTorch implementation of CycleGAN](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix). Download that repo and add the script in the same directory as `train.py` and `test.py`.
 
 Example usage: 
 ```bash
