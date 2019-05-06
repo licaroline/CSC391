@@ -2,7 +2,7 @@
 Quick program for utilizing pretrained Cycle GANs on webcam input. 
 
 Example usage:
-python3 test2.py --dataroot datasets --name style_cezanne_pretrained --model test --no_dropout --gpu_ids -1 --preprocess none
+python3 webcam_cycle_GAN.py --dataroot datasets --name style_cezanne_pretrained --model test --no_dropout --gpu_ids -1 --preprocess none
 """
 import os
 from options.test_options import TestOptions
